@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
+  <!-- Primary SEO Metadata -->
+  <title>Snake // Reborn — Classic Snake, Re-engineered</title>
+  <meta name="title" content="Snake // Reborn — Classic Snake, Re-engineered" />
+  <meta name="description" content="A modern, highly polished, immersive reimagining of the classic arcade Snake game with custom modes, achievements, combo meters, and dynamic sound synthesis." />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Snake // Reborn — Classic Snake, Re-engineered" />
+  <meta property="og:description" content="A modern, highly polished, immersive reimagining of the classic arcade Snake game." />
+  <meta property="og:image" content="/og-image.jpg" />
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;600;800;900&display=swap" rel="stylesheet" />
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐍</text></svg>" />
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Ambient glowing backgrounds -->
+    <div class="ambient-glow" id="ambient-glow"></div>
+    <div class="particles-container" id="particles-container"></div>
+
+    <!-- Achievements Toast Notification -->
+    <div class="achievement-toast" id="achievement-toast">
+      <div class="toast-icon">🏆</div>
+      <div class="toast-content">
+        <div class="toast-title">Achievement Unlocked!</div>
+        <div class="toast-name" id="toast-achievement-name">First Bite</div>
+      </div>
+    </div>
+
+    <!-- MAIN MENU SCREEN -->
+    <div class="screen active" id="screen-main-menu">
+      <header class="menu-header">
+        <h1 class="game-title">SNAKE <span class="accent">//</span> REBORN</h1>
+        <p class="game-subtitle">Classic instinct. Re-engineered.</p>
+      </header>
+      <nav class="menu-nav">
+        <button class="menu-btn primary-btn" id="btn-play-quick">PLAY NOW</button>
+        <button class="menu-btn" id="btn-select-modes">GAME MODES</button>
+        <button class="menu-btn" id="btn-customizer">CUSTOMIZE</button>
+        <button class="menu-btn" id="btn-stats">STATISTICS</button>
+        <button class="menu-btn" id="btn-achievements">ACHIEVEMENTS</button>
+        <button class="menu-btn" id="btn-settings">SETTINGS</button>
+      </nav>
+      <footer class="menu-footer">
+        <span class="version-label">v2.0.26</span>
+      </footer>
+    </div>
+
+    <!-- GAME MODES SCREEN -->
+    <div class="screen" id="screen-modes">
+      <button class="back-btn" id="btn-modes-back">← BACK</button>
+      <h2 class="screen-title">GAME MODES</h2>
+      <div class="modes-grid">
+        <div class="mode-card active" data-mode="classic">
+          <div class="mode-icon">🕹️</div>
+          <h3 class="mode-title">CLASSIC</h3>
+          <p class="mode-desc">The traditional Snake experience. Eat, grow, survive. Wall boundaries are active by default.</p>
+        </div>
+        <div class="mode-card" data-mode="endless">
+          <div class="mode-icon">♾️</div>
+          <h3 class="mode-title">ENDLESS</h3>
+          <p class="mode-desc">No walls! Pass through boundaries to wrap around. A relaxed mode for maximum growth.</p>
+        </div>
+        <div class="mode-card" data-mode="survival">
+          <div class="mode-icon">⚡</div>
+          <h3 class="mode-title">SURVIVAL</h3>
+          <p class="mode-desc">The stakes are high. Speed increases over time, and random obstacle nodes spawn on the grid.</p>
+        </div>
+        <div class="mode-card" data-mode="zen">
+          <div class="mode-icon">🌸</div>
+          <h3 class="mode-title">ZEN</h3>
+          <p class="mode-desc">Immortal Snake. Hitting boundaries wraps around; hitting yourself just shrinks your tail and reduces score.</p>
+        </div>
+        <div class="mode-card" data-mode="challenge">
+          <div class="mode-icon">🎯</div>
+          <h3 class="mode-title">CHALLENGES</h3>
+          <p class="mode-desc">5 custom-designed stages with target conditions and rules. Can you unlock them all?</p>
+        </div>
+      </div>
+      <div class="challenges-overlay" id="challenges-list-container" style="display: none;">
+        <h3 class="sub-screen-title">Select Challenge</h3>
+        <div class="challenges-grid" id="challenges-grid">
+          <!-- Challenges dynamically injected here -->
+        </div>
+      </div>
+      <button class="menu-btn action-btn" id="btn-start-mode">START GAME</button>
+    </div>
+
+    <!-- CUSTOMIZATION SCREEN -->
+    <div class="screen" id="screen-customizer">
+      <button class="back-btn" id="btn-customizer-back">← BACK</button>
+      <h2 class="screen-title">CUSTOMIZE</h2>
+      
+      <div class="customizer-container">
+        <!-- Visual Preview Panel -->
+        <div class="preview-box">
+          <canvas id="preview-canvas" width="300" height="150"></canvas>
+          <span class="preview-label">PREVIEW</span>
+        </div>
+
+        <div class="customizer-controls">
+          <div class="control-group">
+            <label for="input-snake-color">Snake Head & Glow</label>
+            <div class="color-picker-wrapper">
+              <input type="color" id="input-snake-color" value="#00ffcc" />
+              <span class="color-hex-label" id="lbl-snake-color">#00ffcc</span>
+            </div>
+          </div>
+          
+          <div class="control-group">
+            <label for="input-food-color">Normal Food Glow</label>
+            <div class="color-picker-wrapper">
+              <input type="color" id="input-food-color" value="#ff3b30" />
+              <span class="color-hex-label" id="lbl-food-color">#ff3b30</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label>Theme Presets</label>
+            <div class="preset-buttons">
+              <button class="preset-btn" data-snake="#00ffcc" data-food="#ff3b30" style="background: linear-gradient(135deg, #00ffcc, #ff3b30)">Neon</button>
+              <button class="preset-btn" data-snake="#ff007f" data-food="#00f0ff" style="background: linear-gradient(135deg, #ff007f, #00f0ff)">Cyber</button>
+              <button class="preset-btn" data-snake="#ffd700" data-food="#9b5de5" style="background: linear-gradient(135deg, #ffd700, #9b5de5)">Royal</button>
+              <button class="preset-btn" data-snake="#ffffff" data-food="#7f7f7f" style="background: linear-gradient(135deg, #ffffff, #7f7f7f)">Monochrome</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATISTICS SCREEN -->
+    <div class="screen" id="screen-stats">
+      <button class="back-btn" id="btn-stats-back">← BACK</button>
+      <h2 class="screen-title">STATISTICS</h2>
+      <div class="stats-grid" id="stats-container">
+        <!-- Stats cards dynamically injected here -->
+      </div>
+      <button class="menu-btn warning-btn" id="btn-reset-stats">RESET DATA</button>
+    </div>
+
+    <!-- ACHIEVEMENTS SCREEN -->
+    <div class="screen" id="screen-achievements">
+      <button class="back-btn" id="btn-achievements-back">← BACK</button>
+      <h2 class="screen-title">ACHIEVEMENTS</h2>
+      <div class="achievements-list" id="achievements-container">
+        <!-- Achievements dynamically injected here -->
+      </div>
+    </div>
+
+    <!-- SETTINGS SCREEN -->
+    <div class="screen" id="screen-settings">
+      <button class="back-btn" id="btn-settings-back">← BACK</button>
+      <h2 class="screen-title">SETTINGS</h2>
+      
+      <div class="settings-panel">
+        <section class="settings-section">
+          <h3>Gameplay</h3>
+          <div class="setting-row">
+            <label for="select-difficulty">Difficulty</label>
+            <select id="select-difficulty">
+              <option value="easy">Easy (0.5x Multiplier)</option>
+              <option value="normal" selected>Normal (1.0x Multiplier)</option>
+              <option value="hard">Hard (1.5x Multiplier)</option>
+              <option value="insane">Insane (2.0x Multiplier + Obstacles)</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label for="chk-wall-collision">Wall Collision</label>
+            <input type="checkbox" id="chk-wall-collision" checked />
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h3>Audio Controls</h3>
+          <div class="setting-row">
+            <label for="range-sfx-volume">Sound Effects (SFX)</label>
+            <div class="range-wrapper">
+              <input type="range" id="range-sfx-volume" min="0" max="1" step="0.1" value="0.7" />
+              <span class="range-val" id="val-sfx-volume">70%</span>
+            </div>
+          </div>
+          <div class="setting-row">
+            <label for="range-bgm-volume">Ambient Music (BGM)</label>
+            <div class="range-wrapper">
+              <input type="range" id="range-bgm-volume" min="0" max="1" step="0.1" value="0.3" />
+              <span class="range-val" id="val-bgm-volume">30%</span>
+            </div>
+          </div>
+          <div class="setting-row">
+            <label for="chk-audio-mute">Mute Audio</label>
+            <input type="checkbox" id="chk-audio-mute" />
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h3>Accessibility</h3>
+          <div class="setting-row">
+            <label for="chk-reduced-motion">Reduced Motion (No screen shake / simple effects)</label>
+            <input type="checkbox" id="chk-reduced-motion" />
+          </div>
+          <div class="setting-row">
+            <label for="chk-high-contrast">High Contrast Mode</label>
+            <input type="checkbox" id="chk-high-contrast" />
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- GAMEPLAY VIEW -->
+    <div class="screen" id="screen-game">
+      <!-- High-Tech HUD -->
+      <div class="game-hud">
+        <div class="hud-item main-score-wrapper">
+          <span class="hud-label">SCORE</span>
+          <span class="hud-value" id="hud-score">00000</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">BEST</span>
+          <span class="hud-value gold-text" id="hud-best-score">00000</span>
+        </div>
+        <div class="hud-item" id="hud-combo-wrapper">
+          <span class="hud-label">COMBO</span>
+          <span class="hud-value" id="hud-combo">x1</span>
+          <div class="combo-bar-container">
+            <div class="combo-bar" id="hud-combo-bar"></div>
+          </div>
+        </div>
+        <div class="hud-item hide-mobile">
+          <span class="hud-label">SPEED</span>
+          <span class="hud-value" id="hud-speed">120ms</span>
+        </div>
+        <div class="hud-item hide-mobile">
+          <span class="hud-label">LENGTH</span>
+          <span class="hud-value" id="hud-length">3</span>
+        </div>
+        <button class="hud-pause-btn" id="btn-hud-pause" title="Pause Game (Space)">⏸</button>
+      </div>
+
+      <!-- Active Power-up Progress Bar -->
+      <div class="powerup-status-container" id="powerup-status-container">
+        <!-- Dynamically injected active power-ups (e.g. Ghost, Magnet, Multiplier) -->
+      </div>
+
+      <!-- Game Board Container -->
+      <div class="game-board-container" id="board-container">
+        <!-- Canvas renders the grid, snake, food, and particles -->
+        <canvas id="game-canvas" width="700" height="400"></canvas>
+        
+        <!-- Click to Start Overlay -->
+        <div class="board-overlay" id="start-overlay" style="display: flex;">
+          <div class="overlay-content">
+            <h2 class="overlay-title pulse">READY?</h2>
+            <p class="overlay-subtitle">Click or tap the screen to start</p>
+          </div>
+        </div>
+        
+        <!-- Big Pause Overlay -->
+        <div class="board-overlay" id="pause-overlay" style="display: none;">
+          <div class="overlay-content">
+            <h2 class="overlay-title pulse">PAUSED</h2>
+            <p class="overlay-subtitle">Press SPACE or click to resume</p>
+            <div class="overlay-buttons">
+              <button class="menu-btn primary-btn small-btn" id="btn-pause-resume">RESUME</button>
+              <button class="menu-btn warning-btn small-btn" id="btn-pause-quit">QUIT GAME</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- High Score Celebration Splash -->
+        <div class="high-score-celebration" id="highscore-celebration" style="display: none;">
+          <div class="celebration-title">NEW HIGH SCORE!</div>
+        </div>
+      </div>
+
+      <!-- Directional controls (Visible on mobile/tablet) -->
+      <div class="mobile-controls-overlay" id="mobile-controls">
+        <div class="d-pad">
+          <button class="d-btn d-up" id="ctrl-up" aria-label="Move Up">▲</button>
+          <button class="d-btn d-left" id="ctrl-left" aria-label="Move Left">◀</button>
+          <div class="d-center"></div>
+          <button class="d-btn d-right" id="ctrl-right" aria-label="Move Right">▶</button>
+          <button class="d-btn d-down" id="ctrl-down" aria-label="Move Down">▼</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME OVER SCREEN OVERLAY -->
+    <div class="screen" id="screen-game-over">
+      <div class="game-over-box">
+        <h2 class="game-over-title">GAME OVER</h2>
+        <div class="game-over-new-high" id="game-over-new-high" style="display: none;">🏆 NEW BEST SCORE! 🏆</div>
+        
+        <div class="game-over-stats">
+          <div class="go-stat-row">
+            <span>Final Score</span>
+            <span class="go-stat-val highlight-text" id="go-score">0</span>
+          </div>
+          <div class="go-stat-row">
+            <span>Max Combo</span>
+            <span class="go-stat-val" id="go-combo">x1</span>
+          </div>
+          <div class="go-stat-row">
+            <span>Snake Length</span>
+            <span class="go-stat-val" id="go-length">3</span>
+          </div>
+          <div class="go-stat-row">
+            <span>Survival Time</span>
+            <span class="go-stat-val" id="go-time">00:00</span>
+          </div>
+          <div class="go-stat-row" id="go-challenge-result-row" style="display: none;">
+            <span>Challenge Status</span>
+            <span class="go-stat-val" id="go-challenge-status">FAILED</span>
+          </div>
+        </div>
+
+        <div class="game-over-buttons">
+          <button class="menu-btn primary-btn" id="btn-game-over-replay">PLAY AGAIN</button>
+          <button class="menu-btn" id="btn-game-over-menu">MAIN MENU</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
