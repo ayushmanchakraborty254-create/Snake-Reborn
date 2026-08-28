@@ -656,62 +656,102 @@ input[type="color"]::-webkit-color-swatch {
   justify-content: space-between;
   align-items: center;
   gap: 20px;
+  padding: 10px 0;
+  min-height: 48px; /* 44px+ touch target height */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.setting-row:last-child {
+  border-bottom: none;
 }
 
 .setting-row label {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   color: var(--text-main);
+  font-weight: 500;
+  cursor: pointer;
 }
 
 select {
   font-family: var(--font-sans);
-  background: #0f0f15;
-  border: 1px solid rgba(255,255,255,0.15);
+  background: #0d0d14;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--text-main);
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 10px 36px 10px 14px;
+  border-radius: 8px;
   cursor: pointer;
   outline: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  min-height: 40px;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+
+  /* Modern custom arrow */
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300ffcc' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+}
+
+select:hover {
+  border-color: rgba(0, 255, 204, 0.4);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 8px rgba(0, 255, 204, 0.1);
 }
 
 select:focus {
   border-color: var(--primary);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 12px var(--primary-glow);
+}
+
+select option {
+  background-color: #0c0c12;
+  color: var(--text-main);
+  padding: 12px;
 }
 
 /* Custom Checkbox toggle styling */
 input[type="checkbox"] {
   position: relative;
-  width: 44px;
-  height: 24px;
+  width: 56px;
+  height: 28px;
+  min-width: 56px; /* prevent shrinking */
   -webkit-appearance: none;
+  appearance: none;
   outline: none;
-  background: #1c1c28;
-  border-radius: 12px;
+  background: #14141e;
+  border-radius: 14px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
 input[type="checkbox"]:checked {
-  background: var(--primary);
+  background: rgba(0, 255, 204, 0.12);
+  border-color: var(--primary);
+  box-shadow: 0 0 12px rgba(0, 255, 204, 0.25), inset 0 1px 3px rgba(0, 255, 204, 0.2);
 }
 
 input[type="checkbox"]::before {
   content: '';
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: var(--text-bright);
-  transition: transform 0.2s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  background: #8e8e93; /* Muted OFF color */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 input[type="checkbox"]:checked::before {
-  transform: translateX(20px);
-  background: var(--bg-darker);
+  transform: translateX(28px);
+  background: var(--primary); /* Neon ON color */
+  box-shadow: 0 0 10px var(--primary);
 }
 
 .range-wrapper {
@@ -720,37 +760,72 @@ input[type="checkbox"]:checked::before {
   gap: 15px;
   flex: 1;
   max-width: 250px;
+  min-height: 40px;
 }
 
 input[type="range"] {
   flex: 1;
-  background: #1c1c28;
+  background: #14141e;
   height: 6px;
   border-radius: 3px;
   outline: none;
   -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
+input[type="range"]:focus {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 5px rgba(0, 255, 204, 0.15);
+}
+
+/* Slider Thumb Styling */
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 12px var(--primary), 0 2px 4px rgba(0, 0, 0, 0.4);
+  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+  box-shadow: 0 0 16px var(--primary), 0 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.1);
+  background: #ffffff;
+  border-color: var(--primary);
+}
+
+input[type="range"]::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
   background: var(--primary);
+  border: 2px solid #ffffff;
   cursor: pointer;
-  box-shadow: 0 0 10px var(--primary-glow);
-  transition: transform 0.1s;
+  box-shadow: 0 0 12px var(--primary), 0 2px 4px rgba(0, 0, 0, 0.4);
+  transition: all 0.15s ease;
 }
 
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.25);
+  box-shadow: 0 0 16px var(--primary), 0 3px 6px rgba(0, 0, 0, 0.5);
 }
 
 .range-val {
   font-family: var(--font-game);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   width: 45px;
   text-align: right;
+  color: var(--text-main);
 }
 
 /* GAMEPLAY VIEW HUD */
@@ -1359,14 +1434,33 @@ body.is-mobile #board-container {
   }
 
   .setting-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 0;
   }
 
-  .setting-row select, .setting-row input[type="checkbox"], .range-wrapper {
+  .setting-row label {
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .setting-row input[type="checkbox"] {
+    width: 56px !important;
+    max-width: 56px !important;
+    min-width: 56px !important;
+    margin-left: auto;
+  }
+
+  .setting-row select,
+  .setting-row .range-wrapper {
+    flex: 1;
+    min-width: 200px;
     width: 100%;
-    max-width: 100%;
+    margin-top: 4px;
   }
 
   /* Gameplay HUD & Board */

@@ -217,8 +217,9 @@ class AudioSynth {
     if (this.bgmPlaying || !this.ctx) return;
     this.bgmPlaying = true;
     
-    // Ambient rhythmic beat loop - runs every 400ms (150 BPM)
-    const tickTime = 400; 
+    // Ambient rhythmic beat loop - runs every 333ms (90 BPM 8th notes)
+    const tickTime = 333; 
+    this.seqIndex = 0;
     
     this.sequencerInterval = setInterval(() => {
       if (this.ctx.state === 'suspended') return;
@@ -227,55 +228,120 @@ class AudioSynth {
 
       const now = this.ctx.currentTime;
       const index = this.seqIndex;
-      this.seqIndex = (this.seqIndex + 1) % 8;
+      this.seqIndex = (this.seqIndex + 1) % 16; // 16-step loop
 
-      // Soft ambient low-pass filter
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(450, now);
-      filter.connect(this.ctx.destination);
-
-      // Bass notes progression (Am - F - C - G/Em feel)
-      // Step 0: A1, Step 2: F1, Step 4: C2, Step 6: G1
-      const bassProg = [55.00, 55.00, 43.65, 43.65, 65.41, 65.41, 49.00, 82.41];
-      const targetBassFreq = bassProg[index];
-
-      // Bass pulse on steps 0, 2, 4, 6
-      if (index % 2 === 0) {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(targetBassFreq, now);
-
-        gain.gain.setValueAtTime(vol * 0.45, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-
-        osc.connect(gain);
-        gain.connect(filter);
-        osc.start(now);
-        osc.stop(now + 0.38);
+      // 1. Soft atmospheric pad on step 0 and 8 (A minor and F major chord feels)
+      if (index === 0 || index === 8) {
+        const padFreqs = index === 0 ? [110.00, 130.81, 164.81] : [87.31, 110.00, 130.81];
+        padFreqs.forEach(freq => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const padFilter = this.ctx.createBiquadFilter();
+          
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+          
+          // Smooth fade in and slow fade out to create a warm pad background
+          gain.gain.setValueAtTime(0, now);
+          gain.gain.linearRampToValueAtTime(vol * 0.07, now + 0.4);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
+          
+          padFilter.type = 'lowpass';
+          padFilter.frequency.setValueAtTime(450, now);
+          
+          osc.connect(gain);
+          gain.connect(padFilter);
+          padFilter.connect(this.ctx.destination);
+          
+          osc.start(now);
+          osc.stop(now + 2.3);
+        });
       }
 
-      // Spacey quiet plucks on steps 1, 3, 5, 7 randomly
-      if (index % 2 === 1 && Math.random() > 0.4) {
-        // Melodic notes: A3 (220), C4 (261), E4 (329), G4 (392), A4 (440)
-        const melody = [220.00, 261.63, 329.63, 392.00, 440.00];
-        const targetMelodyFreq = melody[Math.floor(Math.random() * melody.length)];
-
+      // 2. Deep sub-bass pulse on syncopated steps
+      const bassSteps = [0, 3, 6, 8, 11, 14];
+      if (bassSteps.includes(index)) {
+        const rootFreq = (index < 8) ? 55.00 : 43.65; // Am to F bass progression
+        // Add a 5th degree bounce on steps 6 and 14
+        const freq = (index === 6 || index === 14) ? rootFreq * 1.5 : rootFreq;
+        
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-
+        const filter = this.ctx.createBiquadFilter();
+        
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(targetMelodyFreq, now);
-
-        gain.gain.setValueAtTime(vol * 0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-
+        osc.frequency.setValueAtTime(freq, now);
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(140, now); // Filter out high harmonics for a sub-bass feel
+        
+        gain.gain.setValueAtTime(vol * 0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        
         osc.connect(gain);
         gain.connect(filter);
+        filter.connect(this.ctx.destination);
+        
         osc.start(now);
-        osc.stop(now + 0.38);
+        osc.stop(now + 0.33);
+      }
+
+      // 3. Minimal hi-hat ticks (highly filtered pluck clicks)
+      const tickSteps = [2, 6, 10, 14];
+      if (tickSteps.includes(index)) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const tickFilter = this.ctx.createBiquadFilter();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(2500, now);
+        osc.frequency.exponentialRampToValueAtTime(6000, now + 0.02);
+        
+        tickFilter.type = 'highpass';
+        tickFilter.frequency.setValueAtTime(2500, now);
+        
+        gain.gain.setValueAtTime(vol * 0.03, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+        
+        osc.connect(gain);
+        gain.connect(tickFilter);
+        tickFilter.connect(this.ctx.destination);
+        
+        osc.start(now);
+        osc.stop(now + 0.035);
+      }
+
+      // 4. Subtle, spacey space-echo arpeggios
+      const leadSteps = [4, 7, 12, 15];
+      if (leadSteps.includes(index)) {
+        const scale = [440.00, 523.25, 587.33, 659.25, 783.99, 880.00]; // Pentatonic minor
+        const noteIndex = (Math.floor(Date.now() / 4500) + index) % scale.length;
+        const freq = scale[noteIndex];
+        
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const delayGain = this.ctx.createGain();
+        const delay = this.ctx.createDelay();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        
+        gain.gain.setValueAtTime(vol * 0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        
+        delay.delayTime.setValueAtTime(0.166, now); // 166ms echo
+        delayGain.gain.setValueAtTime(vol * 0.03, now);
+        delayGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        
+        osc.connect(delay);
+        delay.connect(delayGain);
+        delayGain.connect(this.ctx.destination);
+        
+        osc.start(now);
+        osc.stop(now + 0.4);
       }
     }, tickTime);
   }
