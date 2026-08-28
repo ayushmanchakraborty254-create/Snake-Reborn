@@ -58,12 +58,25 @@ class UIManager {
         audio.playSFX('click');
       });
     }
+
+    // Setup fullscreen change event listeners
+    const onFullscreenChange = () => {
+      const isCurrentlyFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+      if (!isCurrentlyFullscreen && this.activeScreen === 'screen-game' && gameEngine.isStarted && !gameEngine.isPaused && !gameEngine.isGameOver) {
+        this.togglePause();
+      }
+    };
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+    document.addEventListener('mozfullscreenchange', onFullscreenChange);
+    document.addEventListener('MSFullscreenChange', onFullscreenChange);
   }
 
   showScreen(screenId) {
     // Stop loops if leaving game screen
     if (this.activeScreen === 'screen-game' && screenId !== 'screen-game' && screenId !== 'screen-game-over') {
       gameEngine.quit();
+      this.exitFullscreen();
     }
 
     // Update screen elements
@@ -86,6 +99,7 @@ class UIManager {
     // Main Menu navigation
     document.getElementById('btn-play-quick').addEventListener('click', () => {
       audio.resume();
+      this.requestFullscreen();
       this.selectedMode = 'classic';
       this.selectedChallengeId = null;
       this.showScreen('screen-game');
@@ -315,6 +329,7 @@ class UIManager {
     // Setup Start Game button
     document.getElementById('btn-start-mode').onclick = () => {
       audio.resume();
+      this.requestFullscreen();
       if (this.selectedMode === 'challenge' && !this.selectedChallengeId) {
         alert('Please select a specific Challenge to run.');
         return;
@@ -383,6 +398,7 @@ class UIManager {
         e.stopPropagation();
       }
       if (!gameEngine.isStarted && !gameEngine.isPaused && !gameEngine.isGameOver) {
+        this.requestFullscreen();
         gameEngine.isStarted = true;
         startOverlay.style.display = 'none';
         audio.resume(); // Unlocks AudioContext and plays BGM
@@ -402,18 +418,21 @@ class UIManager {
     // Pause Overlays Buttons
     document.getElementById('btn-pause-resume').addEventListener('click', () => {
       audio.playSFX('click');
+      this.requestFullscreen();
       this.togglePause();
     });
 
     document.getElementById('btn-pause-quit').addEventListener('click', () => {
       audio.playSFX('click');
       gameEngine.quit();
+      this.exitFullscreen();
       this.showScreen('screen-main-menu');
     });
 
     // Game Over Buttons
     document.getElementById('btn-game-over-replay').addEventListener('click', () => {
       audio.playSFX('click');
+      this.requestFullscreen();
       this.showScreen('screen-game');
       this.startGame();
     });
@@ -429,6 +448,12 @@ class UIManager {
     gameEngine.togglePause();
     const isPaused = gameEngine.isPaused;
     document.getElementById('pause-overlay').style.display = isPaused ? 'flex' : 'none';
+
+    if (isPaused) {
+      this.exitFullscreen();
+    } else {
+      this.requestFullscreen();
+    }
   }
 
   handleGameTick() {
@@ -539,6 +564,8 @@ class UIManager {
   }
 
   triggerGameOverScreen(results) {
+    this.exitFullscreen();
+
     // Generate explosive debris from segments
     renderer.spawnSnakeDeath(gameEngine.snake, storage.getSetting('snakeColor'));
 
@@ -676,6 +703,36 @@ class UIManager {
       }
     } else {
       overlay.style.display = 'none';
+    }
+  }
+
+  requestFullscreen() {
+    const isMobile = input.detectMobile();
+    if (!isMobile) return;
+
+    const app = document.getElementById('app');
+    if (app) {
+      const req = app.requestFullscreen || app.webkitRequestFullscreen || app.mozRequestFullScreen || app.msRequestFullscreen;
+      if (req) {
+        req.call(app).catch(err => {
+          console.warn('Fullscreen request denied:', err);
+        });
+      }
+    }
+  }
+
+  exitFullscreen() {
+    const isMobile = input.detectMobile();
+    if (!isMobile) return;
+
+    const isCurrentlyFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+    if (isCurrentlyFullscreen) {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+      if (exit) {
+        exit.call(document).catch(err => {
+          console.warn('Fullscreen exit failed:', err);
+        });
+      }
     }
   }
 }

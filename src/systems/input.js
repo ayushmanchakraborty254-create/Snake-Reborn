@@ -14,6 +14,7 @@ class InputHandler {
     this.touchStartX = 0;
     this.touchStartY = 0;
     this.swipeThreshold = 35; // px
+    this.ignoreCurrentTouch = false;
 
     this.isListening = false;
     this.activeScreen = '';
@@ -35,12 +36,12 @@ class InputHandler {
     // Keyboard Event Listeners
     window.addEventListener('keydown', this.handleKeyDown.bind(this));
 
-    // Swipe Listeners (Bound to the board container specifically so swipes outside the board are ignored)
-    const boardEl = document.getElementById('board-container');
-    if (boardEl) {
-      boardEl.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
-      boardEl.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
-      boardEl.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: false });
+    // Swipe Listeners (Bound to screen-game to capture gestures anywhere on the gameplay screen)
+    const gameScreenEl = document.getElementById('screen-game');
+    if (gameScreenEl) {
+      gameScreenEl.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+      gameScreenEl.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+      gameScreenEl.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: false });
     }
     
     this.isListening = true;
@@ -121,19 +122,30 @@ class InputHandler {
   // Swipe Gestures
   handleTouchStart(e) {
     if (this.activeScreen !== 'screen-game') return;
+
     const touch = e.touches[0];
+    const target = e.target;
+    
+    // Check if the user is tapping a button, links, select forms, or overlays
+    const isInteractive = target.closest('button, a, select, input, .menu-btn, .board-overlay, #start-overlay, .overlay-content');
+    if (isInteractive) {
+      this.ignoreCurrentTouch = true;
+      return; // Do NOT call preventDefault to let buttons operate normally
+    }
+
+    this.ignoreCurrentTouch = false;
     this.touchStartX = touch.clientX;
     this.touchStartY = touch.clientY;
     
-    // Prevent scrolling and zooming while playing
+    // Prevent default scrolling on gameplay screen (ignoring HUD buttons)
     if (e.cancelable) {
       e.preventDefault();
     }
   }
 
   handleTouchMove(e) {
-    // Block gestures & pull-to-refresh
-    if (this.activeScreen === 'screen-game') {
+    // Block scrolling, gestures, and pull-to-refresh during active play
+    if (this.activeScreen === 'screen-game' && !this.ignoreCurrentTouch) {
       if (e.cancelable) {
         e.preventDefault();
       }
@@ -141,7 +153,7 @@ class InputHandler {
   }
 
   handleTouchEnd(e) {
-    if (this.activeScreen !== 'screen-game') return;
+    if (this.activeScreen !== 'screen-game' || this.ignoreCurrentTouch) return;
     if (e.changedTouches.length === 0) return;
 
     const touch = e.changedTouches[0];
@@ -163,16 +175,7 @@ class InputHandler {
     }
 
     if (dir) {
-      const changed = this.requestDirectionChange(dir);
-      if (changed) {
-        // Trigger subtle visual feedback on the board
-        const boardEl = document.getElementById('board-container');
-        if (boardEl) {
-          boardEl.classList.remove('swipe-feedback');
-          void boardEl.offsetWidth; // trigger reflow
-          boardEl.classList.add('swipe-feedback');
-        }
-      }
+      this.requestDirectionChange(dir);
     }
   }
 }
