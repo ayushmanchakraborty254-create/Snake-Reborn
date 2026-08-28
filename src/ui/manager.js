@@ -458,12 +458,6 @@ class UIManager {
     gameEngine.togglePause();
     const isPaused = gameEngine.isPaused;
     document.getElementById('pause-overlay').style.display = isPaused ? 'flex' : 'none';
-
-    if (isPaused) {
-      this.exitFullscreen();
-    } else {
-      this.requestFullscreen();
-    }
   }
 
   handleGameTick() {
@@ -719,6 +713,9 @@ class UIManager {
   requestFullscreen() {
     const isMobile = input.detectMobile();
     if (!isMobile) return;
+
+    const isCurrentlyFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+    if (isCurrentlyFullscreen) return;
 
     const app = document.getElementById('app');
     if (app) {
