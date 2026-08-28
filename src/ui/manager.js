@@ -12,6 +12,7 @@ class UIManager {
     this.activeScreen = 'screen-main-menu';
     this.selectedMode = 'classic';
     this.selectedChallengeId = null;
+    this.isFullscreenRequested = false;
 
     // Toast Queue
     this.toastTimeout = null;
@@ -62,6 +63,10 @@ class UIManager {
     // Setup fullscreen change event listeners
     const onFullscreenChange = () => {
       const isCurrentlyFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+      
+      // Synchronize request state with the actual fullscreen state
+      this.isFullscreenRequested = !!isCurrentlyFullscreen;
+
       if (!isCurrentlyFullscreen && this.activeScreen === 'screen-game' && gameEngine.isStarted && !gameEngine.isPaused && !gameEngine.isGameOver) {
         this.togglePause();
       }
@@ -714,17 +719,36 @@ class UIManager {
     const isMobile = input.detectMobile();
     if (!isMobile) return;
 
+    // 1. If document.fullscreenElement already exists: do nothing
     const isCurrentlyFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-    if (isCurrentlyFullscreen) return;
+    if (isCurrentlyFullscreen) {
+      this.isFullscreenRequested = true;
+      return;
+    }
+
+    // 2. If isFullscreenRequested === true: do nothing
+    if (this.isFullscreenRequested) return;
+
+    // 3. Set isFullscreenRequested = true, and call requestFullscreen
+    this.isFullscreenRequested = true;
 
     const app = document.getElementById('app');
     if (app) {
       const req = app.requestFullscreen || app.webkitRequestFullscreen || app.mozRequestFullScreen || app.msRequestFullscreen;
       if (req) {
-        req.call(app).catch(err => {
-          console.warn('Fullscreen request denied:', err);
-        });
+        // Since requestFullscreen returns a Promise, catch rejection and reset state
+        const promise = req.call(app);
+        if (promise && typeof promise.catch === 'function') {
+          promise.catch(err => {
+            console.warn('Fullscreen request denied:', err);
+            this.isFullscreenRequested = false;
+          });
+        }
+      } else {
+        this.isFullscreenRequested = false;
       }
+    } else {
+      this.isFullscreenRequested = false;
     }
   }
 
@@ -736,10 +760,15 @@ class UIManager {
     if (isCurrentlyFullscreen) {
       const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
       if (exit) {
-        exit.call(document).catch(err => {
+        exit.call(document).then(() => {
+          this.isFullscreenRequested = false;
+        }).catch(err => {
           console.warn('Fullscreen exit failed:', err);
+          this.isFullscreenRequested = false;
         });
       }
+    } else {
+      this.isFullscreenRequested = false;
     }
   }
 }
