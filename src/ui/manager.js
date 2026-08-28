@@ -15,6 +15,8 @@ class UIManager {
 
     // Toast Queue
     this.toastTimeout = null;
+
+    this.portraitDismissed = false;
   }
 
   setup() {
@@ -36,6 +38,26 @@ class UIManager {
 
     // Apply startup accessibility themes on body
     this.syncAccessibilityStyles();
+
+    // Setup Mobile & Orientation
+    const isMobile = input.detectMobile();
+    if (isMobile) {
+      document.body.classList.add('is-mobile');
+    }
+
+    // Bind orientation & resize listeners
+    window.addEventListener('resize', this.checkOrientation.bind(this));
+    window.addEventListener('orientationchange', this.checkOrientation.bind(this));
+
+    // Bind orientation dismiss button
+    const dismissBtn = document.getElementById('btn-orientation-dismiss');
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', () => {
+        this.portraitDismissed = true;
+        document.getElementById('orientation-overlay').style.display = 'none';
+        audio.playSFX('click');
+      });
+    }
   }
 
   showScreen(screenId) {
@@ -54,6 +76,9 @@ class UIManager {
       target.classList.add('active');
       this.activeScreen = screenId;
       input.setActiveScreen(screenId);
+      
+      // Update orientation overlay state on screen transition
+      this.checkOrientation();
     }
   }
 
@@ -345,11 +370,6 @@ class UIManager {
     document.getElementById('highscore-celebration').style.display = 'none';
     document.getElementById('powerup-status-container').innerHTML = '';
 
-    // D-Pad visible rules
-    const mobileControls = document.getElementById('mobile-controls');
-    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    mobileControls.style.display = isTouchDevice ? 'block' : 'none';
-
     // Run Engine
     gameEngine.start(this.selectedMode, this.selectedChallengeId);
   }
@@ -635,6 +655,28 @@ class UIManager {
       return `${pad(h)}:${pad(m)}:${pad(s)}`;
     }
     return `${pad(m)}:${pad(s)}`;
+  }
+
+  checkOrientation() {
+    const overlay = document.getElementById('orientation-overlay');
+    if (!overlay) return;
+
+    const isMobile = input.detectMobile();
+    if (!isMobile) {
+      overlay.style.display = 'none';
+      return;
+    }
+
+    if (this.activeScreen === 'screen-game') {
+      const isPortrait = window.innerHeight > window.innerWidth;
+      if (isPortrait && !this.portraitDismissed) {
+        overlay.style.display = 'flex';
+      } else {
+        overlay.style.display = 'none';
+      }
+    } else {
+      overlay.style.display = 'none';
+    }
   }
 }
 

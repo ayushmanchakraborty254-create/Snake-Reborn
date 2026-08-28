@@ -282,17 +282,6 @@
           <div class="celebration-title">NEW HIGH SCORE!</div>
         </div>
       </div>
-
-      <!-- Directional controls (Visible on mobile/tablet) -->
-      <div class="mobile-controls-overlay" id="mobile-controls">
-        <div class="d-pad">
-          <button class="d-btn d-up" id="ctrl-up" aria-label="Move Up">▲</button>
-          <button class="d-btn d-left" id="ctrl-left" aria-label="Move Left">◀</button>
-          <div class="d-center"></div>
-          <button class="d-btn d-right" id="ctrl-right" aria-label="Move Right">▶</button>
-          <button class="d-btn d-down" id="ctrl-down" aria-label="Move Down">▼</button>
-        </div>
-      </div>
     </div>
 
     <!-- GAME OVER SCREEN OVERLAY -->
@@ -328,6 +317,24 @@
           <button class="menu-btn primary-btn" id="btn-game-over-replay">PLAY AGAIN</button>
           <button class="menu-btn" id="btn-game-over-menu">MAIN MENU</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Landscape Orientation Recommendation Overlay -->
+    <div class="orientation-overlay" id="orientation-overlay" style="display: none;">
+      <div class="orientation-overlay-content">
+        <div class="phone-icon-wrapper">
+          <svg class="phone-rotate-icon" viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="5" y="2" width="14" height="20" rx="3" />
+            <path d="M12 18h.01" />
+            <path d="M17 10c0-2-2-4-5-4s-5 2-5 4" stroke-dasharray="2 2" />
+            <path d="M19 8l-2 2-2-2" />
+          </svg>
+        </div>
+        <h2 class="orientation-title">BETTER IN LANDSCAPE</h2>
+        <p class="orientation-subtitle">Snake // Reborn is designed for a wider playfield.</p>
+        <p class="orientation-hint">Rotate your phone for the best experience.</p>
+        <button class="menu-btn primary-btn small-btn orientation-dismiss-btn" id="btn-orientation-dismiss">Continue in Portrait</button>
       </div>
     </div>
   </div>

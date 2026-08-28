@@ -19,6 +19,13 @@ class InputHandler {
     this.activeScreen = '';
   }
 
+  detectMobile() {
+    const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    const isCoarse = window.matchMedia('(pointer: coarse)').matches;
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    return hasTouch && (isCoarse || isMobileUA);
+  }
+
   setup(onDirectionChange, onPauseToggle) {
     this.onDirectionChange = onDirectionChange;
     this.onPauseToggle = onPauseToggle;
@@ -28,16 +35,13 @@ class InputHandler {
     // Keyboard Event Listeners
     window.addEventListener('keydown', this.handleKeyDown.bind(this));
 
-    // Swipe Listeners (Bound to the app wrapper to avoid breaking whole page scroll when not in game)
-    const appEl = document.getElementById('app');
-    if (appEl) {
-      appEl.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: true });
-      appEl.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
-      appEl.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: true });
+    // Swipe Listeners (Bound to the board container specifically so swipes outside the board are ignored)
+    const boardEl = document.getElementById('board-container');
+    if (boardEl) {
+      boardEl.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+      boardEl.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+      boardEl.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: false });
     }
-
-    // D-Pad Click Listeners
-    this.bindDPad();
     
     this.isListening = true;
   }
@@ -101,13 +105,17 @@ class InputHandler {
 
   requestDirectionChange(newDir) {
     // Prevent 180-degree immediate turns into oneself
-    if (newDir.x === -this.currentDirection.x && newDir.x !== 0) return;
-    if (newDir.y === -this.currentDirection.y && newDir.y !== 0) return;
+    if (newDir.x === -this.currentDirection.x && newDir.x !== 0) return false;
+    if (newDir.y === -this.currentDirection.y && newDir.y !== 0) return false;
+
+    // Check if the requested direction is actually different from current nextDirection
+    if (newDir.x === this.nextDirection.x && newDir.y === this.nextDirection.y) return false;
 
     this.nextDirection = newDir;
     if (this.onDirectionChange) {
       this.onDirectionChange(this.nextDirection);
     }
+    return true;
   }
 
   // Swipe Gestures
@@ -116,12 +124,19 @@ class InputHandler {
     const touch = e.touches[0];
     this.touchStartX = touch.clientX;
     this.touchStartY = touch.clientY;
+    
+    // Prevent scrolling and zooming while playing
+    if (e.cancelable) {
+      e.preventDefault();
+    }
   }
 
   handleTouchMove(e) {
-    // Block pinch-to-zoom and default elastic scroll inside game
+    // Block gestures & pull-to-refresh
     if (this.activeScreen === 'screen-game') {
-      if (e.cancelable) e.preventDefault();
+      if (e.cancelable) {
+        e.preventDefault();
+      }
     }
   }
 
@@ -133,8 +148,9 @@ class InputHandler {
     const diffX = touch.clientX - this.touchStartX;
     const diffY = touch.clientY - this.touchStartY;
 
-    if (Math.abs(diffX) < this.swipeThreshold && Math.abs(diffY) < this.swipeThreshold) {
-      return; // Too short to register
+    const maxDiff = Math.max(Math.abs(diffX), Math.abs(diffY));
+    if (maxDiff < this.swipeThreshold) {
+      return; // Too short to register (ignore tap/tiny movement)
     }
 
     let dir = null;
@@ -147,32 +163,17 @@ class InputHandler {
     }
 
     if (dir) {
-      this.requestDirectionChange(dir);
-    }
-  }
-
-  // Mobile D-Pad binding
-  bindDPad() {
-    const directions = {
-      'ctrl-up': { x: 0, y: -1 },
-      'ctrl-down': { x: 0, y: 1 },
-      'ctrl-left': { x: -1, y: 0 },
-      'ctrl-right': { x: 1, y: 0 }
-    };
-
-    Object.entries(directions).forEach(([id, dir]) => {
-      const btn = document.getElementById(id);
-      if (btn) {
-        // Use mousedown/touchstart for faster response than click
-        const handler = (e) => {
-          e.preventDefault();
-          this.requestDirectionChange(dir);
-          audio.playSFX('click');
-        };
-        btn.addEventListener('mousedown', handler);
-        btn.addEventListener('touchstart', handler);
+      const changed = this.requestDirectionChange(dir);
+      if (changed) {
+        // Trigger subtle visual feedback on the board
+        const boardEl = document.getElementById('board-container');
+        if (boardEl) {
+          boardEl.classList.remove('swipe-feedback');
+          void boardEl.offsetWidth; // trigger reflow
+          boardEl.classList.add('swipe-feedback');
+        }
       }
-    });
+    }
   }
 }
 
