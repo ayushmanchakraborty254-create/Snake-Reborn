@@ -3,6 +3,7 @@
 const DEFAULT_SETTINGS = {
   difficulty: 'normal',
   wallCollision: true,
+  hapticFeedback: true,
   sfxVolume: 0.7,
   bgmVolume: 0.3,
   isMuted: false,

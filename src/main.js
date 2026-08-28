@@ -41,6 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // On Pause key
     () => {
       uiManager.togglePause();
+    },
+    // Check if gameplay is active (not paused, started, and not game over)
+    () => {
+      return gameEngine.isStarted && !gameEngine.isPaused && !gameEngine.isGameOver;
     }
   );
 

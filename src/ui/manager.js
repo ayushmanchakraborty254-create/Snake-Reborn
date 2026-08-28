@@ -184,6 +184,7 @@ class UIManager {
   bindSettingsControls() {
     const diffSelect = document.getElementById('select-difficulty');
     const wallCheck = document.getElementById('chk-wall-collision');
+    const hapticCheck = document.getElementById('chk-haptic-feedback');
     const sfxSlider = document.getElementById('range-sfx-volume');
     const bgmSlider = document.getElementById('range-bgm-volume');
     const muteCheck = document.getElementById('chk-audio-mute');
@@ -193,6 +194,9 @@ class UIManager {
     // Load current storage settings
     diffSelect.value = storage.getSetting('difficulty');
     wallCheck.checked = storage.getSetting('wallCollision');
+    if (hapticCheck) {
+      hapticCheck.checked = storage.getSetting('hapticFeedback');
+    }
     sfxSlider.value = storage.getSetting('sfxVolume');
     bgmSlider.value = storage.getSetting('bgmVolume');
     muteCheck.checked = storage.getSetting('isMuted');
@@ -210,6 +214,12 @@ class UIManager {
     wallCheck.addEventListener('change', (e) => {
       storage.setSetting('wallCollision', e.target.checked);
     });
+
+    if (hapticCheck) {
+      hapticCheck.addEventListener('change', (e) => {
+        storage.setSetting('hapticFeedback', e.target.checked);
+      });
+    }
 
     sfxSlider.addEventListener('input', (e) => {
       storage.setSetting('sfxVolume', parseFloat(e.target.value));

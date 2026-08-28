@@ -1,5 +1,6 @@
 // Inputs manager for desktop and mobile play
 import audio from './audio';
+import storage from './storage';
 
 class InputHandler {
   constructor() {
@@ -9,6 +10,7 @@ class InputHandler {
     // Callbacks
     this.onDirectionChange = null;
     this.onPauseToggle = null;
+    this.isGameplayActive = null;
 
     // Swipe tracking
     this.touchStartX = 0;
@@ -27,9 +29,10 @@ class InputHandler {
     return hasTouch && (isCoarse || isMobileUA);
   }
 
-  setup(onDirectionChange, onPauseToggle) {
+  setup(onDirectionChange, onPauseToggle, isGameplayActive) {
     this.onDirectionChange = onDirectionChange;
     this.onPauseToggle = onPauseToggle;
+    this.isGameplayActive = isGameplayActive;
     
     if (this.isListening) return;
     
@@ -100,11 +103,11 @@ class InputHandler {
     }
 
     if (dir) {
-      this.requestDirectionChange(dir);
+      this.requestDirectionChange(dir, 'keyboard');
     }
   }
 
-  requestDirectionChange(newDir) {
+  requestDirectionChange(newDir, inputSource = 'keyboard') {
     // Prevent 180-degree immediate turns into oneself
     if (newDir.x === -this.currentDirection.x && newDir.x !== 0) return false;
     if (newDir.y === -this.currentDirection.y && newDir.y !== 0) return false;
@@ -116,7 +119,27 @@ class InputHandler {
     if (this.onDirectionChange) {
       this.onDirectionChange(this.nextDirection);
     }
+
+    if (inputSource === 'touch') {
+      this.triggerHaptic();
+    }
+
     return true;
+  }
+
+  triggerHaptic() {
+    const hapticEnabled = storage.getSetting('hapticFeedback');
+    if (!hapticEnabled) return;
+
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      if (this.activeScreen === 'screen-game' && this.isGameplayActive && this.isGameplayActive()) {
+        try {
+          navigator.vibrate(10);
+        } catch (e) {
+          // Ignore
+        }
+      }
+    }
   }
 
   // Swipe Gestures
@@ -175,7 +198,7 @@ class InputHandler {
     }
 
     if (dir) {
-      this.requestDirectionChange(dir);
+      this.requestDirectionChange(dir, 'touch');
     }
   }
 }
