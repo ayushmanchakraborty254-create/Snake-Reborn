@@ -79,7 +79,7 @@ class UIManager {
 
   showScreen(screenId) {
     // Stop loops if leaving game screen
-    if (this.activeScreen === 'screen-game' && screenId !== 'screen-game' && screenId !== 'screen-game-over') {
+    if ((this.activeScreen === 'screen-game' || this.activeScreen === 'screen-game-over') && screenId !== 'screen-game' && screenId !== 'screen-game-over') {
       gameEngine.quit();
       this.exitFullscreen();
     }
@@ -573,8 +573,6 @@ class UIManager {
   }
 
   triggerGameOverScreen(results) {
-    this.exitFullscreen();
-
     // Generate explosive debris from segments
     renderer.spawnSnakeDeath(gameEngine.snake, storage.getSetting('snakeColor'));
 
